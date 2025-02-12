@@ -1,0 +1,145 @@
+/* General Layout */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* Header */
+.header {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #faf4f4;
+}
+
+.infoText {
+    margin-bottom: 20px;
+}
+
+/* Search Container */
+.searchContainer {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.searchContainer input {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #444;
+    background-color: #1a1a1a;
+    color: #faf4f4;
+    border-radius: 5px;
+    outline: none;
+}
+
+.searchContainer input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.searchContainer button {
+    padding: 10px 15px;
+    font-size: 16px;
+    background-color: transparent;
+    color: white;
+    border: 1px solid gray;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.searchContainer button:hover {
+    color: rgb(194, 76, 76);
+    border: 1px solid rgb(194, 76, 76);
+}
+
+/* Filter Buttons */
+.filterContainer {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filterContainer button {
+    padding: 8px 15px;
+    font-size: 14px;
+    background-color: #333;
+    color: #faf4f4;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.filterContainer button:hover,
+.filterContainer .active {
+    background-color: rgb(194, 76, 76);
+    color: white;
+}
+
+/* History Table */
+.history {
+    width: 100%;
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #faf4f4;
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+.table td p {
+    margin: 0.5rem;
+}
+
+.table th {
+    background-color: #3b6588;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .searchContainer {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .searchContainer input {
+        width: 100%;
+    }
+
+    .searchContainer button {
+        width: 100%;
+    }
+
+    .filterContainer {
+        flex-wrap: wrap;
+    }
+
+    .table th,
+    .table td {
+        font-size: 14px;
+    }
+}

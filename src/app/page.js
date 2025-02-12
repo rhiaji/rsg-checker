@@ -1,101 +1,143 @@
-import Image from "next/image";
+'use client'
+import { useState, useEffect } from 'react'
+import SSC from 'sscjs'
+import style from '../../public/styles/home.module.css'
+
+const ssc = new SSC('https://api.hive-engine.com/rpc')
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [history, setHistory] = useState([])
+    const [filteredHistory, setFilteredHistory] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
+    const [user, setUser] = useState('')
+    const [inputUser, setInputUser] = useState('')
+    const [filter, setFilter] = useState('all')
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    const fetchCards = async (username) => {
+        setLoading(true)
+        setError(null)
+        let allHistory = {}
+
+        try {
+            const url = `https://history.hive-engine.com/accountHistory?account=${username}&limit=1000&offset=0&symbol=STAR`
+            const response = await fetch(url)
+            const data = await response.json()
+
+            for (const element of data) {
+                if (element.operation === 'nft_transfer') {
+                    try {
+                        const result = await ssc.find('nft', 'STARinstances', { _id: Number(element.nft) }, 1, 0)
+                        if (result.length > 0) {
+                            const card = {
+                                nftId: element.nft,
+                                name: result[0].properties.type,
+                                from: element.from,
+                                to: element.to,
+                                timestamp: element.timestamp,
+                                tx: element.transactionId,
+                            }
+                            if (!allHistory[card.tx]) {
+                                allHistory[card.tx] = {
+                                    timestamp: card.timestamp,
+                                    items: [],
+                                }
+                            }
+                            allHistory[card.tx].items.push(card)
+                        }
+                    } catch (error) {
+                        console.error('Error fetching NFT details:', error)
+                    }
+                }
+            }
+        } catch (error) {
+            setError(error.message)
+        }
+
+        const formattedHistory = Object.entries(allHistory).map(([tx, { timestamp, items }]) => ({ tx, timestamp, items }))
+        setHistory(formattedHistory)
+        setFilteredHistory(formattedHistory)
+        setLoading(false)
+    }
+
+    useEffect(() => {
+        fetchCards(user)
+    }, [])
+
+    const handleSearch = () => {
+        if (inputUser.trim()) {
+            setUser(inputUser.trim())
+            fetchCards(inputUser.trim())
+        }
+    }
+
+    const filterHistory = (type) => {
+        setFilter(type)
+        if (type === 'sent') {
+            setFilteredHistory(history.filter((item) => item.items.some((card) => card.from === user)))
+        } else if (type === 'received') {
+            setFilteredHistory(history.filter((item) => item.items.some((card) => card.to === user)))
+        } else {
+            setFilteredHistory(history)
+        }
+    }
+
+    return (
+        <div className={style.container}>
+            <h1 className={style.header}>Rising Star NFT Transfer Checker</h1>
+            <p className={style.infoText}>This filter applies only to the latest 1000 transactions related to Rising Star in the Hive-Engine API.</p>
+            <div className={style.searchContainer}>
+                <input type="text" placeholder="Enter username..." value={inputUser} onChange={(e) => setInputUser(e.target.value)} />
+                <button onClick={handleSearch}>Search</button>
+            </div>
+            <div className={style.filterContainer}>
+                <button onClick={() => filterHistory('all')} className={filter === 'all' ? style.active : ''}>
+                    All
+                </button>
+                <button onClick={() => filterHistory('sent')} className={filter === 'sent' ? style.active : ''}>
+                    Sent
+                </button>
+                <button onClick={() => filterHistory('received')} className={filter === 'received' ? style.active : ''}>
+                    Received
+                </button>
+            </div>
+            <div className={style.history}>
+                {loading ? (
+                    <p>Loading...</p>
+                ) : filteredHistory.length > 0 ? (
+                    <table className={style.table}>
+                        <thead>
+                            <tr>
+                                <th>Transaction</th>
+                                <th>Time</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredHistory.map((item, index) => (
+                                <tr key={index}>
+                                    <td>
+                                        <a href={`https://hivehub.dev/tx/${item.tx}`} target="_blank" rel="noopener noreferrer">
+                                            {item.tx}
+                                        </a>
+                                    </td>
+                                    <td>{new Date(item.timestamp * 1000).toLocaleString()}</td>
+                                    <td>
+                                        {item.items.map((card, idx) => (
+                                            <p key={idx}>
+                                                <strong>ID:</strong> {card.nftId} | <strong>Card:</strong> {card.name} | <strong>From:</strong>{' '}
+                                                {card.from} | <strong>To:</strong> {card.to}
+                                            </p>
+                                        ))}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p>No transactions found.</p>
+                )}
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    )
 }
