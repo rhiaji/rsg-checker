@@ -18,25 +18,42 @@ export default function Home() {
         setLoading(true)
         setError(null)
         let allHistory = {}
+        let allIds = []
 
         try {
+            // Fetch transfer history
             const url = `https://history.hive-engine.com/accountHistory?account=${username}&limit=1000&offset=0&symbol=STAR`
             const response = await fetch(url)
             const data = await response.json()
 
+            // Gather all NFT IDs
             for (const element of data) {
                 if (element.operation === 'nft_transfer') {
-                    try {
-                        const result = await ssc.find('nft', 'STARinstances', { _id: Number(element.nft) }, 1, 0)
-                        if (result.length > 0) {
+                    allIds.push(Number(element.nft))
+                }
+            }
+
+            // Fetch all NFT details in one request
+            if (allIds.length > 0) {
+                const result = await ssc.find('nft', 'STARinstances', { _id: { $in: allIds } }, 1000, 0)
+
+                // Map results for quick lookup
+                const nftMap = Object.fromEntries(result.map((nft) => [nft._id, nft]))
+
+                // Process history data
+                for (const element of data) {
+                    if (element.operation === 'nft_transfer') {
+                        const nft = nftMap[Number(element.nft)]
+                        if (nft) {
                             const card = {
                                 nftId: element.nft,
-                                name: result[0].properties.type,
+                                name: nft.properties.type,
                                 from: element.from,
                                 to: element.to,
                                 timestamp: element.timestamp,
                                 tx: element.transactionId,
                             }
+
                             if (!allHistory[card.tx]) {
                                 allHistory[card.tx] = {
                                     timestamp: card.timestamp,
@@ -45,8 +62,6 @@ export default function Home() {
                             }
                             allHistory[card.tx].items.push(card)
                         }
-                    } catch (error) {
-                        console.error('Error fetching NFT details:', error)
                     }
                 }
             }
@@ -61,13 +76,12 @@ export default function Home() {
     }
 
     useEffect(() => {
-        fetchCards(user)
-    }, [])
+        if (user) fetchCards(user)
+    }, [user])
 
     const handleSearch = () => {
         if (inputUser.trim()) {
             setUser(inputUser.trim())
-            fetchCards(inputUser.trim())
         }
     }
 
