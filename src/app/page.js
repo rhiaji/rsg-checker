@@ -18,23 +18,40 @@ export default function Home() {
 		setError(null)
 		let allHistory = {}
 		let allIds = []
+		const limit = 500 // Maximum limit per request
+		const totalRecords = 1000 // Total records to fetch
+		let offset = 0 // Start offset
+		let allData = [] // To store all fetched data
 
 		try {
-			const url = `https://accounts.hive-engine.com/accountHistory?account=${username}&symbol=STAR&ops=nft_transfer`
-			const response = await fetch(url)
-			const data = await response.json()
+			while (offset < totalRecords) {
+				const url = `https://accounts.hive-engine.com/accountHistory?account=${username}&symbol=STAR&ops=nft_transfer&limit=${limit}&offset=${offset}`
+				const response = await fetch(url)
 
-			for (const element of data) {
-				if (element.operation === 'nft_transfer') {
-					allIds.push(Number(element.nft))
+				if (!response.ok) {
+					throw new Error(`Failed to fetch data: ${response.statusText}`)
 				}
+
+				const data = await response.json()
+				if (!data || data.length === 0) break
+
+				allData = [...allData, ...data]
+
+				for (const element of data) {
+					if (element.operation === 'nft_transfer') {
+						allIds.push(Number(element.nft))
+					}
+				}
+
+				offset += limit
+				if (data.length < limit) break
 			}
 
 			if (allIds.length > 0) {
 				const result = await ssc.find('nft', 'STARinstances', { _id: { $in: allIds } }, 1000, 0)
 				const nftMap = Object.fromEntries(result.map((nft) => [nft._id, nft]))
 
-				for (const element of data) {
+				for (const element of allData) {
 					if (element.operation === 'nft_transfer') {
 						const nft = nftMap[Number(element.nft)]
 						if (nft) {
@@ -57,15 +74,22 @@ export default function Home() {
 						}
 					}
 				}
+			} else {
+				console.warn('No NFT IDs found in the fetched data.')
 			}
 		} catch (error) {
-			setError(error.message)
+			setError(`Error fetching data: ${error.message}`)
+			console.error(error)
 		}
 
 		const formattedHistory = Object.entries(allHistory).map(([tx, { timestamp, items }]) => ({ tx, timestamp, items }))
 		setHistory(formattedHistory)
 		setFilteredHistory(formattedHistory)
 		setLoading(false)
+
+		if (formattedHistory.length === 0) {
+			console.warn('No transactions found for the given user.')
+		}
 	}
 
 	useEffect(() => {
@@ -159,13 +183,11 @@ export default function Home() {
 											}, {})
 										).map(([name, details], idx) => (
 											<div key={idx} className="flex gap-4 p-4 rounded-lg">
-												{/* Card Image */}
 												<img
 													src={`https://www.risingstargame.com/images/cards/${name.replace(/\s+/g, '%20')}.png`}
 													alt={name}
 													className="w-48 h-64 rounded shadow"
 												/>
-												{/* Card Details */}
 												<div className="flex flex-col justify-between">
 													<p>
 														<strong>Card Name:</strong> {name}
@@ -179,7 +201,6 @@ export default function Home() {
 													<p>
 														<strong>Count:</strong> {details.count}
 													</p>
-													{/* Show IDs Button */}
 													<button
 														onClick={() => alert(`Unique IDs for ${name}: ${details.ids.join(', ')}`)}
 														className="px-4 py-2 mt-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
