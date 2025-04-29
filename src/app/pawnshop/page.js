@@ -174,32 +174,38 @@ export default function Pawnshoppage() {
 	// Render the component
 	return (
 		<div className="p-6 max-w-7xl mx-auto text-white">
-			<h1 className="text-3xl font-bold mb-2">Pawnshop NFT Transfer Checker</h1>
-			<p className="text-sm text-gray-400 mb-6">
-				This filter applies only to the latest 5000 transactions related to Rising Star in the Hive-Engine API.
-			</p>
+			{/* Header */}
+			<header className="text-center mb-8">
+				<h1 className="text-4xl font-bold mb-2">Pawnshop NFT Transfer Checker</h1>
+				<p className="text-sm text-gray-400">Analyze the latest 5000 transactions related to Rising Star NFTs.</p>
+			</header>
 
 			{/* User Input */}
-			<div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+			<div className="flex flex-col sm:flex-row items-center gap-4 mb-8 flex-wrap">
 				<input
 					type="text"
 					placeholder="Enter username..."
 					value={inputUser}
 					onChange={(e) => setInputUser(e.target.value)}
-					className="px-4 py-2 border border-gray-600 rounded bg-gray-900 text-white w-full sm:w-64"
+					className="px-4 py-2 border border-gray-600 rounded bg-gray-900 text-white w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
 				/>
-				<button onClick={handleSearch} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+				<button
+					onClick={handleSearch}
+					className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-md transition-all w-full sm:w-auto"
+				>
 					Search
 				</button>
 			</div>
 
 			{/* Filter Buttons */}
-			<div className="flex gap-2 mb-6">
+			<div className="flex justify-center gap-4 mb-8 flex-wrap">
 				{['all', 'sent', 'received'].map((type) => (
 					<button
 						key={type}
 						onClick={() => filterHistory(type)}
-						className={`px-4 py-2 rounded ${filter === type ? 'bg-blue-700' : 'bg-gray-700'} hover:bg-blue-800`}
+						className={`px-4 py-2 rounded shadow-md transition-all ${
+							filter === type ? 'bg-blue-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-blue-800 hover:text-white'
+						}`}
 					>
 						{type.charAt(0).toUpperCase() + type.slice(1)}
 					</button>
@@ -238,7 +244,7 @@ export default function Pawnshoppage() {
 											href={`https://hivehub.dev/tx/${item.tx}`}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="text-blue-400 hover:text-red-400"
+											className="text-blue-400 hover:text-red-400 break-all"
 										>
 											{item.tx}
 										</a>
@@ -255,11 +261,11 @@ export default function Pawnshoppage() {
 												return acc
 											}, {})
 										).map(([name, details], idx) => (
-											<div key={idx} className="flex gap-4 p-4 rounded-lg">
+											<div key={idx} className="flex flex-col sm:flex-row gap-4 p-4 rounded-lg">
 												<img
 													src={`https://www.risingstargame.com/images/cards/${name.replace(/\s+/g, '%20')}.png`}
 													alt={name}
-													className="w-48 h-64 rounded shadow"
+													className="w-32 h-48 sm:w-48 sm:h-64 rounded shadow"
 												/>
 												<div className="flex flex-col justify-between">
 													<p>
@@ -281,7 +287,7 @@ export default function Pawnshoppage() {
 														}}
 														className="px-4 py-2 mt-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
 													>
-														Show IDs
+														View NFT IDs
 													</button>
 												</div>
 											</div>
@@ -292,7 +298,7 @@ export default function Pawnshoppage() {
 						</tbody>
 					</table>
 				) : (
-					<p>No transactions found.</p>
+					<p className="text-gray-400 text-center">No transactions found.</p>
 				)}
 			</div>
 
