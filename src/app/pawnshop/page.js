@@ -4,7 +4,7 @@ import SSC from 'sscjs'
 
 const ssc = new SSC('https://api.hive-engine.com/rpc')
 
-export default function Home() {
+export default function Pawnshoppage() {
 	// -------------------------------
 	// 🔄 States for loading status, error, data and filters
 	// -------------------------------
@@ -58,7 +58,7 @@ export default function Home() {
 				}
 
 				for (const element of data) {
-					if (element.operation === 'nft_transfer' && !element.to.toLowerCase().startsWith('rspawnshop')) {
+					if (element.operation === 'nft_transfer' && element.to.toLowerCase().startsWith('rspawnshop')) {
 						allIds.add(Number(element.nft)) // Add to Set to avoid duplicates
 						allData.push(element)
 					}
@@ -171,17 +171,15 @@ export default function Home() {
 		}
 	}
 
-	// -------------------------------
-	// 🧩 Render component
-	// -------------------------------
+	// Render the component
 	return (
 		<div className="p-6 max-w-7xl mx-auto text-white">
-			<h1 className="text-3xl font-bold mb-2">Player NFT Transfer Checker</h1>
+			<h1 className="text-3xl font-bold mb-2">Pawnshop NFT Transfer Checker</h1>
 			<p className="text-sm text-gray-400 mb-6">
 				This filter applies only to the latest 5000 transactions related to Rising Star in the Hive-Engine API.
 			</p>
 
-			{/* 🔍 User Input */}
+			{/* User Input */}
 			<div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
 				<input
 					type="text"
@@ -195,7 +193,7 @@ export default function Home() {
 				</button>
 			</div>
 
-			{/* 🔄 Filter Buttons */}
+			{/* Filter Buttons */}
 			<div className="flex gap-2 mb-6">
 				{['all', 'sent', 'received'].map((type) => (
 					<button
@@ -208,7 +206,7 @@ export default function Home() {
 				))}
 			</div>
 
-			{/* 📊 Table Results */}
+			{/* Table Results */}
 			<div className="overflow-x-auto">
 				{loading ? (
 					<div className="flex flex-col items-center gap-4 py-10">
@@ -298,7 +296,7 @@ export default function Home() {
 				)}
 			</div>
 
-			{/* 📦 Modal for NFT IDs */}
+			{/* Modal for NFT IDs */}
 			{showModal && (
 				<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={() => setShowModal(false)}>
 					<div className="bg-gray-900 p-6 rounded-lg max-w-md w-full text-white shadow-lg relative">
